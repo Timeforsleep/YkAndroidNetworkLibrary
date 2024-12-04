@@ -1,12 +1,21 @@
 package com.example.yknetworklibrary;
 
-public class YkPriority {
+public enum YkPriority {
 
-    public static final int LOW = 0;
+    LOW(0),
+    NORMAL(1),
+    HIGH(2),
+    IMMEDIATE(3);
 
-    public static final int NORMAL = 1;
+    private final int value;
 
-    public static final int HIGH = 2;
+    YkPriority(int value) {
+        this.value = value;
+    }
 
-    public static final int IMMEDIATE = 3;
+    public int getValue() {
+        return value;
+    }
+
+    // 比较优先级大小
 }

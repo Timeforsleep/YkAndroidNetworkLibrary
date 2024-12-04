@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 
@@ -14,8 +15,9 @@ public class YkRequest implements Comparable<YkRequest> {
     private RequestBody requestBody; // 请求体
     private String method = "GET"; // 默认方法为 GET
     private Request mOkHttpRequest;
+    private APMRecord apmRecord;
     //优先级
-    private int mPriority = YkPriority.NORMAL;
+    private YkPriority mPriority = YkPriority.NORMAL;
     private List<Interceptor> interceptors = new ArrayList<>();
 
     private YkBaseServant.RequestCallback mCallback;  // 作为类的成员变量，保存回调
@@ -31,6 +33,12 @@ public class YkRequest implements Comparable<YkRequest> {
         return this;  // 返回当前对象，实现链式调用
     }
 
+    // 设置请求的优先级
+    public YkRequest setPriority(YkPriority priority){
+        this.mPriority = priority;
+        return this;
+    }
+
     // 构建最终的 Request 对象
     public Request build() {
         // 如果存在请求体且未设置方法，默认使用 POST
@@ -41,9 +49,20 @@ public class YkRequest implements Comparable<YkRequest> {
         if (url == null || url.isEmpty()) {
             throw new IllegalStateException("URL must be set before building the request");
         }
-        for (int i = 0; i < interceptors.size(); i++) {
-            YkNetworkManager.getInstance().getOkHttpManager().getClient().interceptors().add(interceptors.get(i));
+
+        // 将 APMRecord 设置为 Request 的 Tag
+        if (this.apmRecord != null) {
+            this.requestBuilder.tag(APMRecord.class, this.apmRecord);  // 将 APMRecord 作为 tag 存储
         }
+
+        // 获取 OkHttpClient 的拦截器列表
+        OkHttpClient.Builder clientBuilder = YkNetworkManager.getInstance().getOkHttpManager().getClient().newBuilder();
+
+        // 添加自定义拦截器
+        for (Interceptor interceptor : interceptors) {
+            clientBuilder.addInterceptor(interceptor);  // 使用 addInterceptor() 方法添加拦截器
+        }
+        YkNetworkManager.getInstance().getOkHttpManager().getClient().newBuilder()
         this.requestBuilder.method(method, requestBody);
         return requestBuilder.build();
     }
@@ -137,18 +156,16 @@ public class YkRequest implements Comparable<YkRequest> {
                 '}';
     }
 
-    public int getPriority() {
+    public YkPriority getPriority() {
         return mPriority;
     }
 
-    public void setPriority(int mPriority) {
-        this.mPriority = mPriority;
-    }
+
 
     @Override
     public int compareTo(YkRequest other) {
         //数字越大优先级越高
-        return Integer.compare(other.mPriority, this.mPriority);
+        return Integer.compare(other.mPriority.getValue(), this.mPriority.getValue());
     }
 
     public Request getmOkHttpRequest() {
@@ -161,5 +178,13 @@ public class YkRequest implements Comparable<YkRequest> {
 
     public YkBaseServant.RequestCallback getmCallback() {
         return mCallback;
+    }
+
+    public APMRecord getApmRecord() {
+        return apmRecord;
+    }
+
+    public void setApmRecord(APMRecord apmRecord) {
+        this.apmRecord = apmRecord;
     }
 }

@@ -11,8 +11,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.yknetworklibrary.APMRecord;
 import com.example.yknetworklibrary.YkBaseServant;
 import com.example.yknetworklibrary.YkNetworkManager;
+import com.example.yknetworklibrary.YkPriority;
 import com.example.yknetworklibrary.configs.YkNetworkConfig;
 
 import java.io.IOException;
@@ -44,11 +46,13 @@ public class MainActivity extends AppCompatActivity {
                     ykBaseServant.url("https://jsonplaceholder.typicode.com/posts")
                             .method("GET")
                             .addHeader("Authorization", "Bearer token")
+                            .priority(YkPriority.HIGH)
+                            .setApmRecord(new APMRecord("https://jsonplaceholder.typicode.com/posts"))
                             .request(new YkBaseServant.RequestCallback() {
                                 @Override
                                 public void onSuccess(Response response) {
                                     try {
-                                        Log.w("TAG", "onSuccess: "+response.body().string() );
+                                        Log.w("TAG", "onSuccess: " + response.body().string());
                                     } catch (IOException e) {
                                         throw new RuntimeException(e);
                                     }
@@ -61,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
                                 @Override
                                 public void onError(int statusCode, String errorMessage) {
-                                    Log.w("TAG", "onError: "+statusCode+"    "+errorMessage );
+                                    Log.w("TAG", "onError: " + statusCode + "    " + errorMessage);
                                 }
                             });
                 }
